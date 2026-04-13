@@ -25,6 +25,24 @@
       "Bash(black *)",
       "Bash(isort *)",
       "Bash(mypy *)",
+      "Bash(python3 *)",
+      "Bash(pip3 install *)",
+      "Bash(python -m pytest *)",
+      "Bash(touch *)",
+      "Bash(echo *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(sort *)",
+      "Bash(diff *)",
+      "Bash(which *)",
+      "Bash(pwd)",
+      "Bash(date *)",
+      "Bash(tree *)",
+      "Bash(xargs *)",
+      "Bash(gh *)",
+      "Bash(rm -rf __pycache__)",
+      "Bash(rm -rf .pytest_cache)",
+      "Bash(rm -f *.pyc)",
       "Read",
       "Write",
       "Edit",
@@ -34,7 +52,11 @@
     ],
     "deny": [
       "Bash(rm -rf /)",
-      "Bash(sudo *)"
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf .)",
+      "Bash(sudo *)",
+      "Bash(chmod 777 *)",
+      "Bash(mkfs *)"
     ]
   },
   "env": {
@@ -42,6 +64,27 @@
     "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "64000"
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/workspace-context.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v osascript &>/dev/null; then osascript -e 'display notification \"Claude Code finished the task\" with title \"Zero-Question Kit\" sound name \"Glass\"'; elif command -v notify-send &>/dev/null; then notify-send 'Zero-Question Kit' 'Claude Code finished the task'; fi",
+            "async": true
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit",

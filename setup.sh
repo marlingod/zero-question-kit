@@ -90,7 +90,7 @@ echo "  1. cd $TARGET"
 echo "  2. Edit CLAUDE.md (fill in the Quick Config section)"
 if [ "$KIT_TYPE" = "phd" ]; then
     echo "  3. Try: /lit-review quantum continual learning"
-    echo "     or:  /research-pipeline QFIM-EWC comparison with standard EWC"
+    echo "     or:  /research-pipeline compare approaches on benchmark datasets"
     echo "     or:  /pre-submission-review"
     echo "     or:  /ingest <URL or file> (add to knowledge base)"
     echo "     or:  /ask <research question> (answer compounds the wiki)"

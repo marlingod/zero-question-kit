@@ -32,10 +32,10 @@ Copy the `universal-kit/` folder to your machine. You need the whole folder.
 ```bash
 cd universal-kit/
 
-# ─── For any app project (e.g., trading system, SaaS app, etc.) ───
+# ─── For any app project (web app, API, SaaS platform, etc.) ───
 ./setup.sh generic /path/to/your/project
 
-# ─── For PhD research (QFIM-EWC, any research project) ───
+# ─── For PhD research (any research project) ───
 ./setup.sh phd /path/to/your/research
 
 # ─── Current directory ───
@@ -236,10 +236,10 @@ For PhD kit, you'll also see:
 /lit-review quantum Fisher information matrix for continual learning
 
 # Full research pipeline
-/research-pipeline compare QFIM-EWC against standard EWC on split MNIST and permuted MNIST
+/research-pipeline compare transformer vs LSTM architectures on benchmark datasets
 
 # Pre-submission review
-/pre-submission-review docs/papers/qfim-ewc-paper/
+/pre-submission-review docs/papers/my-paper/
 ```
 
 #### Knowledge Base (both kits):

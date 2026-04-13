@@ -44,16 +44,16 @@ The v2 orchestrator actively manages context quality:
 
 ```bash
 # New session
-python orchestrator_v2.py "Build patient appointment scheduling for MyApp"
+python orchestrator_v2.py "Build the checkout flow for the e-commerce module"
 
 # Named session
-python orchestrator_v2.py --session myapp-appointments "Build patient appointment scheduling"
+python orchestrator_v2.py --session my-feature "Build the checkout flow"
 
 # Resume after interruption
 python orchestrator_v2.py --resume
 
 # Resume specific session
-python orchestrator_v2.py --resume --session myapp-appointments
+python orchestrator_v2.py --resume --session my-feature
 
 # Custom model and iteration limit
 python orchestrator_v2.py --model claude-opus-4-6 --max-iterations 50 "Complex task..."

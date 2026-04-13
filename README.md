@@ -44,7 +44,7 @@ This repo packages all of that into **47 drop-in files** across two kits.
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/zero-question-kit.git
+git clone https://github.com/marlingod/zero-question-kit.git
 cd zero-question-kit
 
 # For any app project

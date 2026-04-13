@@ -382,7 +382,7 @@ In `~/.claude/settings.json`:
 #### Full Feature Build (Zero Questions)
 
 ```
-Build the patient appointment scheduling feature for MyApp.
+Build the user notification feature for the project.
 
 Create an agent team:
 - "backend-dev": Build the FastAPI routes, models, and service layer for appointments
@@ -399,7 +399,7 @@ Test-engineer and docs-writer work in parallel after implementation.
 #### Research + Build Pipeline
 
 ```
-I need a CCM revenue calculator for MyApp's investor demo.
+I need a pricing calculator for an upcoming product demo.
 
 Create an agent team:
 - "researcher": Research CMS CCM billing codes (99490, 99491, 99487, 99489), 
