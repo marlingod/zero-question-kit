@@ -11,6 +11,7 @@
   <a href="#-the-problem">The Problem</a> •
   <a href="#-two-kits">Two Kits</a> •
   <a href="#-knowledge-base">Knowledge Base</a> •
+  <a href="#-ultraplan-integration">Ultraplan</a> •
   <a href="#-architecture">Architecture</a> •
   <a href="SETUP-GUIDE.md">Full Setup Guide</a>
 </p>
@@ -37,7 +38,7 @@ This happens because LLMs are optimized for helpfulness, and the training signal
 5. **Auto-approve safe actions** → Hooks
 6. **Build a self-compounding knowledge base** → Wiki (Karpathy pattern)
 
-This repo packages all of that into **47 drop-in files** across two kits.
+This repo packages all of that into **67 drop-in files** across two kits.
 
 ---
 
@@ -74,12 +75,15 @@ For web apps, APIs, CLIs, fullstack platforms, data pipelines — anything you b
 | `/ship-feature <desc>` | Scans codebase → plans → builds → tests → formats → commits |
 | `/deep-research <topic>` | 5+ search angles, 15+ sources, comparison matrix, recommendations |
 | `/team-build <feature>` | 5 parallel agents: researcher, backend, frontend, tester, reviewer |
+| `/auto-implement <recs>` | Takes research recommendations → creates git worktrees → agent teams per phase |
+| `/from-ultraplan` | Bridges Anthropic's [ultraplan](https://code.claude.com/docs/en/ultraplan) to parallel worktree execution |
+| `/research-and-build <topic>` | Full loop: research → recommendations → worktrees → agent teams → build |
 | `/scaffold` | Bootstraps entire project from your Quick Config |
 | `/ingest <URL or file>` | Adds source to self-compounding knowledge base |
 | `/ask <question>` | Answers from wiki — answer filed back, wiki grows |
 | `/lint-wiki` | Health-checks the knowledge base, finds gaps and connections |
 
-**Included:** 6 skills, 3 subagents, 7 commands, auto-formatting hooks, quality gates, universal settings with pre-approved permissions for Python/Node/Go/Rust.
+**Included:** 7 skills, 3 subagents, 10 commands, auto-formatting hooks, quality gates, native desktop notifications, workspace context injection, universal settings with pre-approved permissions for Python/Node/Go/Rust.
 
 ---
 
@@ -92,11 +96,14 @@ For PhD candidates, research scientists, and anyone doing literature-heavy, expe
 | `/lit-review <topic>` | 20+ papers, classifies, synthesizes, identifies gaps, generates BibTeX |
 | `/research-pipeline <topic>` | Full pipeline: lit review → experiment → implementation → results → paper |
 | `/pre-submission-review` | 3 simulated harsh reviewers + methodology audit + completeness check |
+| `/auto-implement <recs>` | Research recommendations → git worktrees → agent teams per phase |
+| `/from-ultraplan` | Bridges Anthropic's ultraplan to parallel execution |
+| `/research-and-build <topic>` | Research → recommendations → worktrees → build |
 | `/ingest <paper URL>` | Compiles paper into wiki article with backlinks and concepts |
 | `/ask <research question>` | Synthesizes from wiki — answer compounds the knowledge base |
 | `/lint-wiki` | Broken links, orphan concepts, stale articles, connection suggestions |
 
-**Included:** 6 skills, 3 subagents (methodology-advisor, peer-reviewer, research-engineer), 6 commands, publication-quality figure defaults, LaTeX table generation.
+**Included:** 7 skills, 3 subagents (methodology-advisor, peer-reviewer, research-engineer), 9 commands, publication-quality figure defaults, LaTeX table generation, native desktop notifications.
 
 ---
 
@@ -126,6 +133,35 @@ Drop a paper into wiki/raw/
 ```
 
 The key insight: **you rarely touch the wiki manually.** It's the LLM's domain. At ~100 articles / ~400K words, you have a searchable personal knowledge base that no generic RAG pipeline can match for your domain.
+
+---
+
+## Ultraplan Integration
+
+[Ultraplan](https://code.claude.com/docs/en/ultraplan) is Anthropic's cloud-based planning feature — it drafts implementation plans in the browser with inline comments and iterative revision. Our kit bridges ultraplan's planning to parallel execution:
+
+```bash
+# 1. Anthropic plans it (cloud, browser review, inline comments)
+/ultraplan migrate the auth service from sessions to JWTs
+
+# 2. You review, comment, iterate in browser
+# 3. Click "Approve plan and teleport back to terminal"
+
+# 4. Our kit executes it (worktrees, 5 parallel agents, quality gates)
+/from-ultraplan
+```
+
+Or skip ultraplan and go straight from research to build:
+
+```bash
+# Research produces recommendations → auto-creates worktrees → agent teams build each phase
+/research-and-build lab order tracking and result management
+
+# Or feed existing recommendations directly
+/auto-implement Phase 1: internal tracking model. Phase 2: external API integration. Phase 3: interoperability layer.
+```
+
+Each phase gets its own git worktree. Each worktree gets its own agent team (architect → backend → frontend → tester → reviewer). Phases run in parallel when independent, sequentially when dependent.
 
 ---
 
@@ -181,33 +217,40 @@ zero-question-kit/
 ├── README.md                        # This file
 ├── SETUP-GUIDE.md                   # Step-by-step setup instructions
 ├── DEEP-DIVE-GUIDE.md               # Technical deep-dive on all 8 layers
+├── RASCHKA-UPGRADE.md               # Raschka's 6 components applied to our kit
 ├── setup.sh                         # One-command installer
 ├── scripts/
 │   └── wiki-bootstrap.sh            # Initialize knowledge base
 │
 ├── generic/                         # ── Any app project ──
 │   ├── CLAUDE.md                    # Decision protocol (6-field Quick Config)
-│   ├── orchestrator.py              # API-based agentic loop (standalone)
-│   ├── scripts/                     # Hook scripts
+│   ├── orchestrator.py              # API-based agentic loop (all 6 Raschka components)
+│   ├── scripts/                     # Hook scripts (quality gate, idle assign,
+│   │                                # wiki bootstrap, workspace context)
 │   └── .claude/
-│       ├── settings.json            # Permissions + hooks + MCP
-│       ├── skills/    (6 skills)    # build-feature, code-review, research,
-│       │                            # data-pipeline, knowledge-base, wiki-lint
+│       ├── settings.json            # Permissions + hooks + MCP + notifications
+│       ├── skills/    (7 skills)    # build-feature, code-review, research,
+│       │                            # data-pipeline, knowledge-base, wiki-lint,
+│       │                            # worktree-manager
 │       ├── agents/    (3 agents)    # security-reviewer, test-writer, researcher
-│       └── commands/  (7 commands)  # ship-feature, deep-research, team-build,
-│                                    # scaffold, ingest, ask, lint-wiki
+│       └── commands/ (10 commands)  # ship-feature, deep-research, team-build,
+│                                    # scaffold, auto-implement, from-ultraplan,
+│                                    # research-and-build, ingest, ask, lint-wiki
 │
 └── phd-research/                    # ── Academic research ──
     ├── CLAUDE.md                    # Research domain config
     ├── scripts/                     # Hook scripts
     └── .claude/
-        ├── settings.json            # Permissions + hooks
-        ├── skills/    (6 skills)    # lit-review, experiment, paper-writing,
-        │                            # data-analysis, knowledge-base, wiki-lint
+        ├── settings.json            # Permissions + hooks + notifications
+        ├── skills/    (7 skills)    # lit-review, experiment, paper-writing,
+        │                            # data-analysis, knowledge-base, wiki-lint,
+        │                            # worktree-manager
         ├── agents/    (3 agents)    # methodology-advisor, peer-reviewer,
         │                            # research-engineer
-        └── commands/  (6 commands)  # lit-review, research-pipeline,
-                                     # pre-submission-review, ingest, ask, lint-wiki
+        └── commands/  (9 commands)  # lit-review, research-pipeline,
+                                     # pre-submission-review, auto-implement,
+                                     # from-ultraplan, research-and-build,
+                                     # ingest, ask, lint-wiki
 ```
 
 ---
@@ -251,6 +294,7 @@ The knowledge base layer (inspired by Karpathy) adds compounding: every AI explo
 |----------|-------------|
 | [SETUP-GUIDE.md](SETUP-GUIDE.md) | Step-by-step install, configuration, first run, daily workflow |
 | [DEEP-DIVE-GUIDE.md](DEEP-DIVE-GUIDE.md) | Technical deep-dive: how each layer works, real code examples |
+| [RASCHKA-UPGRADE.md](RASCHKA-UPGRADE.md) | How we applied Raschka's 6 coding agent components |
 
 ---
 
@@ -259,6 +303,7 @@ The knowledge base layer (inspired by Karpathy) adds compounding: every AI explo
 - [Claude Code Skills Docs](https://code.claude.com/docs/en/skills)
 - [Claude Code Subagents Docs](https://code.claude.com/docs/en/sub-agents)
 - [Claude Code Agent Teams Docs](https://code.claude.com/docs/en/agent-teams)
+- [Claude Code Ultraplan Docs](https://code.claude.com/docs/en/ultraplan)
 - [Agent Skills Open Standard](https://github.com/anthropics/skills)
 - [everything-claude-code](https://github.com/affaan-m/everything-claude-code) — 38 agents, 156 skills
 - [claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice) — Community patterns
