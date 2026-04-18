@@ -1,4 +1,5 @@
 {
+  "model": "claude-opus-4-7",
   "permissions": {
     "allow": [
       "Bash(python *)",
@@ -124,7 +125,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if command -v osascript &>/dev/null; then osascript -e 'display notification \"Claude Code finished the task\" with title \"Zero-Question Kit\" sound name \"Glass\"'; elif command -v notify-send &>/dev/null; then notify-send 'Zero-Question Kit' 'Claude Code finished the task'; fi",
+            "command": "if command -v osascript &>/dev/null; then osascript -e 'display notification \"Task complete\" with title \"Zero-Question Kit\" sound name \"Glass\"'; elif command -v notify-send &>/dev/null; then notify-send 'Zero-Question Kit' 'Task complete'; fi",
             "async": true
           }
         ]

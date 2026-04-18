@@ -11,6 +11,7 @@
   <a href="#-the-problem">The Problem</a> •
   <a href="#-two-kits">Two Kits</a> •
   <a href="#-knowledge-base">Knowledge Base</a> •
+  <a href="#-cloud-routines">Cloud Routines</a> •
   <a href="#-ultraplan-integration">Ultraplan</a> •
   <a href="#-architecture">Architecture</a> •
   <a href="SETUP-GUIDE.md">Full Setup Guide</a>
@@ -38,7 +39,7 @@ This happens because LLMs are optimized for helpfulness, and the training signal
 5. **Auto-approve safe actions** → Hooks
 6. **Build a self-compounding knowledge base** → Wiki (Karpathy pattern)
 
-This repo packages all of that into **67 drop-in files** across two kits.
+This repo packages all of that into **73 drop-in files** across two kits.
 
 ---
 
@@ -165,6 +166,39 @@ Each phase gets its own git worktree. Each worktree gets its own agent team (arc
 
 ---
 
+## Cloud Routines
+
+Ready-to-use [Claude Code Routines](https://code.claude.com/docs/en/routines) that run autonomously on Anthropic's cloud — even when your laptop is closed.
+
+| Routine | Trigger | What It Does |
+|---------|---------|-------------|
+| `nightly-code-review.md` | Daily 3 AM | Reviews all open PRs: security, quality, style. Leaves inline comments. |
+| `dependency-audit.md` | Weekly Monday 2 AM | Audits deps, applies safe minor/patch upgrades, opens PR if tests pass |
+| `wiki-maintenance.md` | Weekly Sunday 8 AM | Lints wiki, discovers connections, synthesizes themes, updates indexes |
+| `test-coverage.md` | Weekly Wednesday 4 AM | Finds coverage gaps, writes tests for top 5 uncovered files, opens PR |
+| `issue-triage.md` | GitHub: issues.opened | Auto-labels, checks duplicates, drafts response on new issues |
+
+Setup: go to [claude.ai/code/routines](https://claude.ai/code/routines), paste the prompt from any template, add your repo, set the trigger. See `routines/README.md` for details.
+
+---
+
+## Opus 4.7 + Managed Agents
+
+The kit defaults to **Claude Opus 4.7** (released April 16, 2026) with effort-level-aware subagents:
+
+| Agent | Model | Effort | Why |
+|-------|-------|--------|-----|
+| Security reviewer | Opus | `xhigh` | Security needs deep reasoning, no shortcuts |
+| Methodology advisor | Opus | `xhigh` | Catching validity threats requires exhaustive checking |
+| Peer reviewer | Opus | `xhigh` | Simulating a tough reviewer needs thorough analysis |
+| Test writer | Sonnet | `high` | Fast + good enough for test generation |
+| Researcher | Sonnet | `high` | Balance between depth and cost |
+| Research engineer | Sonnet | `high` | Implementation doesn't need max reasoning |
+
+For cloud-hosted autonomous execution without managing infrastructure, see [MANAGED-AGENTS.md](MANAGED-AGENTS.md) — Anthropic's fully managed agent harness via API.
+
+---
+
 ## Architecture
 
 ```
@@ -218,6 +252,7 @@ zero-question-kit/
 ├── SETUP-GUIDE.md                   # Step-by-step setup instructions
 ├── DEEP-DIVE-GUIDE.md               # Technical deep-dive on all 8 layers
 ├── RASCHKA-UPGRADE.md               # Raschka's 6 components applied to our kit
+├── MANAGED-AGENTS.md                # Anthropic's managed agent alternative
 ├── setup.sh                         # One-command installer
 ├── scripts/
 │   └── wiki-bootstrap.sh            # Initialize knowledge base
@@ -227,12 +262,15 @@ zero-question-kit/
 │   ├── orchestrator.py              # API-based agentic loop (all 6 Raschka components)
 │   ├── scripts/                     # Hook scripts (quality gate, idle assign,
 │   │                                # wiki bootstrap, workspace context)
+│   ├── routines/   (5 routines)     # Cloud-hosted scheduled automations:
+│   │                                # nightly-code-review, dependency-audit,
+│   │                                # wiki-maintenance, test-coverage, issue-triage
 │   └── .claude/
-│       ├── settings.json            # Permissions + hooks + MCP + notifications
+│       ├── settings.json            # Opus 4.7 + permissions + hooks + MCP + notifications
 │       ├── skills/    (7 skills)    # build-feature, code-review, research,
 │       │                            # data-pipeline, knowledge-base, wiki-lint,
 │       │                            # worktree-manager
-│       ├── agents/    (3 agents)    # security-reviewer, test-writer, researcher
+│       ├── agents/    (3 agents)    # Opus+xhigh reviewer, Sonnet+high writer/researcher
 │       └── commands/ (10 commands)  # ship-feature, deep-research, team-build,
 │                                    # scaffold, auto-implement, from-ultraplan,
 │                                    # research-and-build, ingest, ask, lint-wiki
@@ -240,13 +278,14 @@ zero-question-kit/
 └── phd-research/                    # ── Academic research ──
     ├── CLAUDE.md                    # Research domain config
     ├── scripts/                     # Hook scripts
+    ├── routines/   (5 routines)     # Same cloud automations, research-adapted
     └── .claude/
-        ├── settings.json            # Permissions + hooks + notifications
+        ├── settings.json            # Opus 4.7 + permissions + hooks + notifications
         ├── skills/    (7 skills)    # lit-review, experiment, paper-writing,
         │                            # data-analysis, knowledge-base, wiki-lint,
         │                            # worktree-manager
-        ├── agents/    (3 agents)    # methodology-advisor, peer-reviewer,
-        │                            # research-engineer
+        ├── agents/    (3 agents)    # Opus+xhigh methodology/peer-reviewer,
+        │                            # Sonnet+high research-engineer
         └── commands/  (9 commands)  # lit-review, research-pipeline,
                                      # pre-submission-review, auto-implement,
                                      # from-ultraplan, research-and-build,
@@ -261,7 +300,8 @@ zero-question-kit/
 |-------------|---------|-------------|
 | **Claude Code** | Latest | Latest |
 | **Node.js** | 18+ | 20+ |
-| **Claude Plan** | Pro (single agent + subagents) | Max (Agent Teams, Opus 4.6) |
+| **Claude Plan** | Pro (single agent + subagents) | Max (Agent Teams, Opus 4.7, Routines) |
+| **Default Model** | Opus 4.7 (set in settings.json) | Opus 4.7 with `xhigh` effort for critical agents |
 | **OS** | macOS, Linux | macOS, Linux |
 
 Install Claude Code: `npm install -g @anthropic-ai/claude-code`
@@ -295,6 +335,7 @@ The knowledge base layer (inspired by Karpathy) adds compounding: every AI explo
 | [SETUP-GUIDE.md](SETUP-GUIDE.md) | Step-by-step install, configuration, first run, daily workflow |
 | [DEEP-DIVE-GUIDE.md](DEEP-DIVE-GUIDE.md) | Technical deep-dive: how each layer works, real code examples |
 | [RASCHKA-UPGRADE.md](RASCHKA-UPGRADE.md) | How we applied Raschka's 6 coding agent components |
+| [MANAGED-AGENTS.md](MANAGED-AGENTS.md) | Anthropic's managed agent API as cloud alternative to orchestrator.py |
 
 ---
 
@@ -304,6 +345,8 @@ The knowledge base layer (inspired by Karpathy) adds compounding: every AI explo
 - [Claude Code Subagents Docs](https://code.claude.com/docs/en/sub-agents)
 - [Claude Code Agent Teams Docs](https://code.claude.com/docs/en/agent-teams)
 - [Claude Code Ultraplan Docs](https://code.claude.com/docs/en/ultraplan)
+- [Claude Code Routines Docs](https://code.claude.com/docs/en/routines)
+- [Claude Managed Agents Docs](https://docs.anthropic.com/en/docs/managed-agents)
 - [Agent Skills Open Standard](https://github.com/anthropics/skills)
 - [everything-claude-code](https://github.com/affaan-m/everything-claude-code) — 38 agents, 156 skills
 - [claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice) — Community patterns

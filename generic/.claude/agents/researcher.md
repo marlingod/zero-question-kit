@@ -3,6 +3,7 @@ name: researcher
 description: Deep research on any topic — technology, competitors, compliance, market, architecture decisions. Triggers on research, investigate, compare options, evaluate.
 tools: WebFetch, Read, Write, Bash(curl *), Grep, Glob
 model: sonnet
+effort: high
 ---
 
 You are a research analyst. When given ANY topic:

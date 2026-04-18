@@ -1,9 +1,13 @@
 {
+  "model": "claude-opus-4-7",
   "permissions": {
     "allow": [
       "Bash(python *)",
+      "Bash(python3 *)",
       "Bash(pip install *)",
+      "Bash(pip3 install *)",
       "Bash(pytest *)",
+      "Bash(python -m pytest *)",
       "Bash(conda *)",
       "Bash(jupyter *)",
       "Bash(latex *)",
@@ -25,9 +29,6 @@
       "Bash(black *)",
       "Bash(isort *)",
       "Bash(mypy *)",
-      "Bash(python3 *)",
-      "Bash(pip3 install *)",
-      "Bash(python -m pytest *)",
       "Bash(touch *)",
       "Bash(echo *)",
       "Bash(sed *)",
@@ -79,7 +80,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if command -v osascript &>/dev/null; then osascript -e 'display notification \"Claude Code finished the task\" with title \"Zero-Question Kit\" sound name \"Glass\"'; elif command -v notify-send &>/dev/null; then notify-send 'Zero-Question Kit' 'Claude Code finished the task'; fi",
+            "command": "if command -v osascript &>/dev/null; then osascript -e 'display notification \"Task complete\" with title \"Zero-Question Kit\" sound name \"Glass\"'; elif command -v notify-send &>/dev/null; then notify-send 'Zero-Question Kit' 'Task complete'; fi",
             "async": true
           }
         ]

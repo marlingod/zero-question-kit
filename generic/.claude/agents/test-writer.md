@@ -3,6 +3,7 @@ name: test-writer
 description: Writes comprehensive tests for any language/framework. Auto-detects test framework. Triggers on test, coverage, write tests, verify.
 tools: Read, Write, Bash, Grep, Glob
 model: sonnet
+effort: high
 memory: project
 ---
 
