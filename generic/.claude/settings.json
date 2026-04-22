@@ -131,6 +131,17 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash(pytest *)|Bash(python -m pytest *)|Bash(npx vitest *)|Bash(npx jest *)|Bash(go test *)|Bash(cargo test *)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/tdd-counter.sh"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit",
@@ -138,6 +149,24 @@
           {
             "type": "command",
             "command": "FILE=\"$CLAUDE_TOOL_INPUT_FILE_PATH\"; case \"$FILE\" in *.py) black --quiet \"$FILE\" 2>/dev/null; isort --quiet \"$FILE\" 2>/dev/null;; *.ts|*.tsx|*.js|*.jsx|*.json|*.css|*.md) npx prettier --write \"$FILE\" 2>/dev/null;; *.go) gofmt -w \"$FILE\" 2>/dev/null;; *.rs) rustfmt \"$FILE\" 2>/dev/null;; esac; true"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=\"$CLAUDE_TOOL_INPUT_FILE_PATH\"; case \"$FILE\" in *.py) [ -d tests/unit ] && cd \"$CLAUDE_PROJECT_DIR\" && pytest tests/unit -x --tb=short -q 2>&1 | tail -40 ;; *.ts|*.tsx|*.js|*.jsx) [ -f package.json ] && cd \"$CLAUDE_PROJECT_DIR\" && (npx vitest run --reporter=basic 2>&1 || npx jest --silent 2>&1) | tail -40 ;; *.go) cd \"$CLAUDE_PROJECT_DIR\" && go test -short ./... 2>&1 | tail -40 ;; esac; true"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(pytest *)|Bash(python -m pytest *)|Bash(npx vitest *)|Bash(npx jest *)|Bash(go test *)|Bash(cargo test *)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/tdd-post-test.sh"
           }
         ]
       }

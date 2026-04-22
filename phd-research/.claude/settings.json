@@ -95,6 +95,35 @@
             "command": "FILE=\"$CLAUDE_TOOL_INPUT_FILE_PATH\"; case \"$FILE\" in *.py) black --quiet \"$FILE\" 2>/dev/null; isort --quiet \"$FILE\" 2>/dev/null;; esac; true"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=\"$CLAUDE_TOOL_INPUT_FILE_PATH\"; case \"$FILE\" in *.py) [ -d tests ] && cd \"$CLAUDE_PROJECT_DIR\" && pytest tests -x --tb=short -q 2>&1 | tail -40 ;; esac; true"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(pytest *)|Bash(python -m pytest *)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/tdd-post-test.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash(pytest *)|Bash(python -m pytest *)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/tdd-counter.sh"
+          }
+        ]
       }
     ]
   }
