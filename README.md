@@ -7,13 +7,14 @@
 </p>
 
 <p align="center">
-  <a href="#-quick-start">Quick Start</a> •
-  <a href="#-the-problem">The Problem</a> •
-  <a href="#-two-kits">Two Kits</a> •
-  <a href="#-knowledge-base">Knowledge Base</a> •
-  <a href="#-cloud-routines">Cloud Routines</a> •
-  <a href="#-ultraplan-integration">Ultraplan</a> •
-  <a href="#-architecture">Architecture</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#the-problem">The Problem</a> •
+  <a href="#two-kits">Two Kits</a> •
+  <a href="#knowledge-base">Knowledge Base</a> •
+  <a href="#tdd-loop">TDD Loop</a> •
+  <a href="#cloud-routines">Cloud Routines</a> •
+  <a href="#ultraplan-integration">Ultraplan</a> •
+  <a href="#architecture">Architecture</a> •
   <a href="SETUP-GUIDE.md">Full Setup Guide</a>
 </p>
 
@@ -28,7 +29,7 @@ Every AI coding assistant does the same thing: asks you 15 questions before writ
 > *"Would you prefer REST or GraphQL?"*
 > *"Can you confirm you want me to run this?"*
 
-This happens because LLMs are optimized for helpfulness, and the training signal rewards *checking before acting*. The default is to ask. But for builders who know what they want, this creates a bottleneck — you spend more time answering questions than the AI spends building.
+This happens because LLMs are optimized for helpfulness, and the training signal rewards *checking before acting*. The default is to ask. For builders who know what they want, this creates a bottleneck — you spend more time answering questions than the AI spends building.
 
 **The fix isn't "tell it to stop asking."** The fix is to *eliminate every reason it would need to ask*:
 
@@ -36,10 +37,11 @@ This happens because LLMs are optimized for helpfulness, and the training signal
 2. **Give it tools to self-resolve** → MCP servers
 3. **Teach it reusable workflows** → Skills
 4. **Delegate to specialists** → Subagents & Agent Teams
-5. **Auto-approve safe actions** → Hooks
+5. **Mechanically enforce safety** → Hooks (not prompts)
 6. **Build a self-compounding knowledge base** → Wiki (Karpathy pattern)
+7. **Close the test loop** → PostToolUse auto-test + iteration cap (NVIDIA pattern)
 
-This repo packages all of that into **73 drop-in files** across two kits.
+This repo packages all of that into **94 drop-in files** across two kits.
 
 ---
 
@@ -74,17 +76,19 @@ For web apps, APIs, CLIs, fullstack platforms, data pipelines — anything you b
 | Command | What Happens |
 |---------|-------------|
 | `/ship-feature <desc>` | Scans codebase → plans → builds → tests → formats → commits |
+| `/tdd <feature>` | Strict TDD loop with mechanical iteration cap + Opus debugger escalation |
+| `/property-tests <problem>` | Generate Hypothesis property tests BEFORE implementation (for high-stakes code) |
 | `/deep-research <topic>` | 5+ search angles, 15+ sources, comparison matrix, recommendations |
 | `/team-build <feature>` | 5 parallel agents: researcher, backend, frontend, tester, reviewer |
 | `/auto-implement <recs>` | Takes research recommendations → creates git worktrees → agent teams per phase |
-| `/from-ultraplan` | Bridges Anthropic's [ultraplan](https://code.claude.com/docs/en/ultraplan) to parallel worktree execution |
 | `/research-and-build <topic>` | Full loop: research → recommendations → worktrees → agent teams → build |
+| `/from-ultraplan` | Bridges Anthropic's [ultraplan](https://code.claude.com/docs/en/ultraplan) to parallel worktree execution |
 | `/scaffold` | Bootstraps entire project from your Quick Config |
 | `/ingest <URL or file>` | Adds source to self-compounding knowledge base |
 | `/ask <question>` | Answers from wiki — answer filed back, wiki grows |
 | `/lint-wiki` | Health-checks the knowledge base, finds gaps and connections |
 
-**Included:** 7 skills, 3 subagents, 10 commands, auto-formatting hooks, quality gates, native desktop notifications, workspace context injection, universal settings with pre-approved permissions for Python/Node/Go/Rust.
+**Included:** 8 skills, 4 subagents, 12 commands, auto-test-on-edit hook, mechanical iteration cap, auto-formatting hooks, quality gates, native desktop notifications, workspace context injection, universal settings with pre-approved permissions for Python/Node/Go/Rust.
 
 ---
 
@@ -97,14 +101,16 @@ For PhD candidates, research scientists, and anyone doing literature-heavy, expe
 | `/lit-review <topic>` | 20+ papers, classifies, synthesizes, identifies gaps, generates BibTeX |
 | `/research-pipeline <topic>` | Full pipeline: lit review → experiment → implementation → results → paper |
 | `/pre-submission-review` | 3 simulated harsh reviewers + methodology audit + completeness check |
+| `/tdd <algorithm>` | Strict TDD loop for research implementations (PennyLane, PyTorch, etc.) |
+| `/property-tests <spec>` | Property-based tests for correctness-critical algorithms |
 | `/auto-implement <recs>` | Research recommendations → git worktrees → agent teams per phase |
-| `/from-ultraplan` | Bridges Anthropic's ultraplan to parallel execution |
 | `/research-and-build <topic>` | Research → recommendations → worktrees → build |
+| `/from-ultraplan` | Bridges Anthropic's ultraplan to parallel execution |
 | `/ingest <paper URL>` | Compiles paper into wiki article with backlinks and concepts |
 | `/ask <research question>` | Synthesizes from wiki — answer compounds the knowledge base |
 | `/lint-wiki` | Broken links, orphan concepts, stale articles, connection suggestions |
 
-**Included:** 7 skills, 3 subagents (methodology-advisor, peer-reviewer, research-engineer), 9 commands, publication-quality figure defaults, LaTeX table generation, native desktop notifications.
+**Included:** 8 skills, 4 subagents (methodology-advisor, peer-reviewer, research-engineer, opus-debugger), 11 commands, publication-quality figure defaults, LaTeX table generation, native desktop notifications.
 
 ---
 
@@ -133,36 +139,50 @@ Drop a paper into wiki/raw/
             → Repeat. Wiki grows smarter.
 ```
 
-The key insight: **you rarely touch the wiki manually.** It's the LLM's domain. At ~100 articles / ~400K words, you have a searchable personal knowledge base that no generic RAG pipeline can match for your domain.
+**You rarely touch the wiki manually.** It's the LLM's domain. At ~100 articles, you have a searchable personal knowledge base that no generic RAG pipeline can match for your domain.
 
 ---
 
-## Ultraplan Integration
+## TDD Loop
 
-[Ultraplan](https://code.claude.com/docs/en/ultraplan) is Anthropic's cloud-based planning feature — it drafts implementation plans in the browser with inline comments and iterative revision. Our kit bridges ultraplan's planning to parallel execution:
+Inspired by [NVIDIA NeMo Agent Toolkit's code generation pattern](https://developer.nvidia.com/blog/improve-ai-code-generation-using-nvidia-nemo-agent-toolkit/). The kit enforces a closed-loop test-execute-reflect discipline — mechanically, via hooks, not via prompts.
 
-```bash
-# 1. Anthropic plans it (cloud, browser review, inline comments)
-/ultraplan migrate the auth service from sessions to JWTs
+**Three enforcement layers:**
 
-# 2. You review, comment, iterate in browser
-# 3. Click "Approve plan and teleport back to terminal"
+### Layer 1: Auto-test-on-edit hook
+After every `Write|Edit|MultiEdit`, the relevant test suite runs and the failure tail is injected back into context. Claude physically cannot claim tests pass without evidence.
 
-# 4. Our kit executes it (worktrees, 5 parallel agents, quality gates)
-/from-ultraplan
+```json
+"PostToolUse": [
+  { "matcher": "Write|Edit|MultiEdit",
+    "hooks": [{"command": "pytest tests/unit -x --tb=short | tail -40"}] }
+]
 ```
 
-Or skip ultraplan and go straight from research to build:
+### Layer 2: Mechanical iteration cap (hooks, not prompts)
+After 3 failed test runs, a `PreToolUse` hook *blocks the test command itself*. Prompt-level caps ("max 3 iterations") get ignored by turn 4. A hook returning exit 1 cannot be ignored.
 
 ```bash
-# Research produces recommendations → auto-creates worktrees → agent teams build each phase
-/research-and-build lab order tracking and result management
-
-# Or feed existing recommendations directly
-/auto-implement Phase 1: internal tracking model. Phase 2: external API integration. Phase 3: interoperability layer.
+# scripts/tdd-counter.sh blocks further test runs after 3 failures
+# scripts/tdd-post-test.sh increments on fail, resets on pass
 ```
 
-Each phase gets its own git worktree. Each worktree gets its own agent team (architect → backend → frontend → tester → reviewer). Phases run in parallel when independent, sequentially when dependent.
+### Layer 3: Context-isolated debugger (`opus-debugger` subagent)
+When the loop gets stuck at iteration 2, escalate to an `opus-debugger` subagent running Opus 4.7 at `xhigh` effort. The subagent reads the failure trace with a fresh context — no half-built implementation polluting the analysis. Returns a specific hypothesis + minimum fix.
+
+### Usage
+```bash
+/tdd user authentication with JWT, password reset, and rate limiting
+```
+
+Claude writes the tests first, implements, runs tests (automatically), self-corrects up to 3 times (escalating to Opus debugger if needed), and either commits working code or writes a blocker doc and moves on.
+
+### For correctness-critical code: property-based tests FIRST
+```bash
+/property-tests medical record PHI handling — SSN must never appear in logs or error messages
+```
+
+Generates Hypothesis-library property tests covering invariants (not examples) before any implementation. For HIPAA, finance, auth, or any domain where "almost correct" means "wrong."
 
 ---
 
@@ -182,15 +202,45 @@ Setup: go to [claude.ai/code/routines](https://claude.ai/code/routines), paste t
 
 ---
 
-## Opus 4.7 + Managed Agents
+## Ultraplan Integration
 
-The kit defaults to **Claude Opus 4.7** (released April 16, 2026) with effort-level-aware subagents:
+[Ultraplan](https://code.claude.com/docs/en/ultraplan) is Anthropic's cloud-based planning feature — it drafts implementation plans in the browser with inline comments and iterative revision. The kit bridges ultraplan's planning to parallel execution:
+
+```bash
+# 1. Anthropic plans it (cloud, browser review, inline comments)
+/ultraplan migrate the auth service from sessions to JWTs
+
+# 2. You review, comment, iterate in browser
+# 3. Click "Approve plan and teleport back to terminal"
+
+# 4. Kit executes it (worktrees, 5 parallel agents, quality gates)
+/from-ultraplan
+```
+
+Or skip ultraplan and go straight from research to build:
+
+```bash
+# Research produces recommendations → auto-creates worktrees → agent teams build each phase
+/research-and-build lab order tracking and result management
+
+# Or feed existing recommendations directly
+/auto-implement Phase 1: internal tracking model. Phase 2: external API integration.
+```
+
+Each phase gets its own git worktree. Each worktree gets its own agent team (architect → backend → frontend → tester → reviewer). Phases run in parallel when independent, sequentially when dependent.
+
+---
+
+## Opus 4.7 + Model Specialization
+
+The kit defaults to **Claude Opus 4.7** (released April 16, 2026) with effort-level-aware subagents. Model choice matches task difficulty — the NVIDIA specialization idea, stripped of vendor-specific orchestration overhead.
 
 | Agent | Model | Effort | Why |
 |-------|-------|--------|-----|
 | Security reviewer | Opus | `xhigh` | Security needs deep reasoning, no shortcuts |
 | Methodology advisor | Opus | `xhigh` | Catching validity threats requires exhaustive checking |
 | Peer reviewer | Opus | `xhigh` | Simulating a tough reviewer needs thorough analysis |
+| **Opus debugger** | **Opus** | **`xhigh`** | **Stuck-loop rescue with fresh context** |
 | Test writer | Sonnet | `high` | Fast + good enough for test generation |
 | Researcher | Sonnet | `high` | Balance between depth and cost |
 | Research engineer | Sonnet | `high` | Implementation doesn't need max reasoning |
@@ -214,7 +264,8 @@ For cloud-hosted autonomous execution without managing infrastructure, see [MANA
          │                 │                 │
   ┌──────▼──────┐  ┌──────▼──────┐  ┌──────▼──────┐
   │   Skills    │  │  Knowledge  │  │    Hooks    │
-  │ (Playbooks) │  │  Base (Wiki)│  │ (Guardrails)│
+  │ (Playbooks) │  │  Base (Wiki)│  │ (TDD loop + │
+  │             │  │             │  │ formatters) │
   └──────┬──────┘  └──────┬──────┘  └──────┬──────┘
          │                │                 │
          └────────────────┼─────────────────┘
@@ -228,7 +279,11 @@ For cloud-hosted autonomous execution without managing infrastructure, see [MANA
          └────────┬───────┘
            ┌──────▼──────┐
            │ MCP Servers  │  External tools
-           └─────────────┘
+           └──────┬──────┘
+                  │
+            ┌─────▼──────┐
+            │  Routines  │  Cloud-hosted, scheduled
+            └────────────┘
 ```
 
 | Layer | What | Why It Kills Questions |
@@ -236,11 +291,24 @@ For cloud-hosted autonomous execution without managing infrastructure, see [MANA
 | **CLAUDE.md** | Decision protocol with defaults | Claude checks here BEFORE asking |
 | **Skills** | Reusable autonomous playbooks | Encodes "how to do X" |
 | **Knowledge Base** | Self-compounding wiki | Claude searches wiki instead of asking you |
-| **Subagents** | Specialist delegates | Each knows exactly what to do |
-| **Agent Teams** | Parallel workforce | Teammates coordinate with each other, not you |
+| **Subagents** | Specialist delegates with effort levels | Each knows exactly what to do, at the right reasoning depth |
+| **Agent Teams** | Parallel workforce in worktrees | Teammates coordinate with each other, not you |
+| **Hooks (TDD)** | Auto-test + mechanical iteration cap | Tests run mechanically; blocked after 3 failures |
+| **Hooks (safety)** | Pre-approve safe, block dangerous | No permission prompts on safe commands |
 | **MCP Servers** | External tools | Claude looks things up instead of asking |
-| **Hooks** | Deterministic guardrails | Auto-approve safe, auto-reject dangerous |
 | **Commands** | One-shot triggers | `/command` invokes full autonomous pipeline |
+| **Routines** | Cloud-scheduled automation | Runs while laptop is closed |
+
+---
+
+## Intellectual Foundations
+
+The kit is a synthesis of four ideas, each solving a different part of "AI asks too many questions":
+
+- **Sebastian Raschka** — ["Components of a Coding Agent"](https://sebastianraschka.com/) — a lot of apparent model quality is really context quality. The kit's `orchestrator.py` implements Raschka's 6 components (workspace context, prompt caching, structured tools, context compaction, session memory, bounded subagents).
+- **Andrej Karpathy** — [LLM knowledge base pattern](https://x.com/karpathy) — the LLM owns a self-compounding wiki; every exploration files back and compounds. The kit's wiki + `/ingest`, `/ask`, `/lint-wiki` commands implement this.
+- **NVIDIA NeMo Agent Toolkit** — [code generation pattern](https://developer.nvidia.com/blog/improve-ai-code-generation-using-nvidia-nemo-agent-toolkit/) — closed-loop test-execute-reflect with hard iteration cap. The kit's `/tdd` command + PostToolUse hooks + mechanical iteration counter implement this (without NVIDIA's multi-model orchestration overhead).
+- **Anthropic April 2026 releases** — Opus 4.7 with `xhigh` effort, Ultraplan (cloud planning), Routines (cloud scheduled tasks), Managed Agents (hosted agent API). The kit natively integrates all four.
 
 ---
 
@@ -251,7 +319,7 @@ zero-question-kit/
 ├── README.md                        # This file
 ├── SETUP-GUIDE.md                   # Step-by-step setup instructions
 ├── DEEP-DIVE-GUIDE.md               # Technical deep-dive on all 8 layers
-├── RASCHKA-UPGRADE.md               # Raschka's 6 components applied to our kit
+├── RASCHKA-UPGRADE.md               # Raschka's 6 components applied
 ├── MANAGED-AGENTS.md                # Anthropic's managed agent alternative
 ├── setup.sh                         # One-command installer
 ├── scripts/
@@ -259,37 +327,45 @@ zero-question-kit/
 │
 ├── generic/                         # ── Any app project ──
 │   ├── CLAUDE.md                    # Decision protocol (6-field Quick Config)
-│   ├── orchestrator.py              # API-based agentic loop (all 6 Raschka components)
-│   ├── scripts/                     # Hook scripts (quality gate, idle assign,
-│   │                                # wiki bootstrap, workspace context)
-│   ├── routines/   (5 routines)     # Cloud-hosted scheduled automations:
-│   │                                # nightly-code-review, dependency-audit,
-│   │                                # wiki-maintenance, test-coverage, issue-triage
+│   ├── orchestrator.py              # Standalone API agentic loop (Raschka's 6 components)
+│   ├── scripts/                     # quality-gate, assign-next-task, workspace-context,
+│   │                                # tdd-counter (iteration cap),
+│   │                                # tdd-post-test (counter update),
+│   │                                # wiki-bootstrap
+│   ├── routines/   (5 routines)     # Cloud-hosted: nightly-code-review,
+│   │                                # dependency-audit, wiki-maintenance,
+│   │                                # test-coverage, issue-triage
 │   └── .claude/
-│       ├── settings.json            # Opus 4.7 + permissions + hooks + MCP + notifications
-│       ├── skills/    (7 skills)    # build-feature, code-review, research,
+│       ├── settings.json            # Opus 4.7 + permissions + TDD hooks + MCP + notifications
+│       ├── skills/    (8 skills)    # build-feature, code-review, research,
 │       │                            # data-pipeline, knowledge-base, wiki-lint,
-│       │                            # worktree-manager
-│       ├── agents/    (3 agents)    # Opus+xhigh reviewer, Sonnet+high writer/researcher
-│       └── commands/ (10 commands)  # ship-feature, deep-research, team-build,
-│                                    # scaffold, auto-implement, from-ultraplan,
+│       │                            # worktree-manager, tdd-code-gen
+│       ├── agents/    (4 agents)    # security-reviewer (Opus/xhigh),
+│       │                            # opus-debugger (Opus/xhigh),
+│       │                            # test-writer (Sonnet/high),
+│       │                            # researcher (Sonnet/high)
+│       └── commands/ (12 commands)  # ship-feature, tdd, property-tests,
+│                                    # deep-research, team-build, scaffold,
+│                                    # auto-implement, from-ultraplan,
 │                                    # research-and-build, ingest, ask, lint-wiki
 │
 └── phd-research/                    # ── Academic research ──
     ├── CLAUDE.md                    # Research domain config
-    ├── scripts/                     # Hook scripts
+    ├── scripts/                     # Hook scripts including TDD counter
     ├── routines/   (5 routines)     # Same cloud automations, research-adapted
     └── .claude/
-        ├── settings.json            # Opus 4.7 + permissions + hooks + notifications
-        ├── skills/    (7 skills)    # lit-review, experiment, paper-writing,
+        ├── settings.json            # Opus 4.7 + permissions + TDD hooks + notifications
+        ├── skills/    (8 skills)    # lit-review, experiment, paper-writing,
         │                            # data-analysis, knowledge-base, wiki-lint,
-        │                            # worktree-manager
-        ├── agents/    (3 agents)    # Opus+xhigh methodology/peer-reviewer,
-        │                            # Sonnet+high research-engineer
-        └── commands/  (9 commands)  # lit-review, research-pipeline,
-                                     # pre-submission-review, auto-implement,
-                                     # from-ultraplan, research-and-build,
-                                     # ingest, ask, lint-wiki
+        │                            # worktree-manager, tdd-code-gen
+        ├── agents/    (4 agents)    # methodology-advisor (Opus/xhigh),
+        │                            # peer-reviewer (Opus/xhigh),
+        │                            # opus-debugger (Opus/xhigh),
+        │                            # research-engineer (Sonnet/high)
+        └── commands/  (11 commands) # lit-review, research-pipeline,
+                                     # pre-submission-review, tdd, property-tests,
+                                     # auto-implement, from-ultraplan,
+                                     # research-and-build, ingest, ask, lint-wiki
 ```
 
 ---
@@ -314,17 +390,10 @@ Install Claude Code: `npm install -g @anthropic-ai/claude-code`
 |------|-----------|----------|
 | Single agent + skills | 1x | Most daily work |
 | With subagents | 4-7x | Complex features, audits |
+| TDD loop (auto-test on every edit) | 2-3x | Serious implementation work |
+| Opus debugger escalation | +1x per invocation | Stuck bugs only |
 | Agent Teams (5 agents) | ~15x | Large features, parallel research |
-
----
-
-## Motivation
-
-AI coding assistants are powerful but needy. Every question they ask is a context switch that breaks your flow.
-
-LLMs don't ask because they're incapable — they ask because they're in a **decision vacuum**. When you encode your decisions, teach workflows, give tools, and pre-approve safe actions, the questions vanish. What remains is an autonomous collaborator that takes a single instruction and delivers a finished result.
-
-The knowledge base layer (inspired by Karpathy) adds compounding: every AI exploration feeds back into a searchable knowledge store, making the next exploration richer. Over weeks, this becomes a personal research brain no generic tool can replicate.
+| Cloud Routines | Per-run cost, runs unattended | Scheduled automation |
 
 ---
 
@@ -339,6 +408,16 @@ The knowledge base layer (inspired by Karpathy) adds compounding: every AI explo
 
 ---
 
+## Motivation
+
+AI coding assistants are powerful but needy. Every question they ask is a context switch that breaks your flow.
+
+LLMs don't ask because they're incapable — they ask because they're in a **decision vacuum**. When you encode your decisions, teach workflows, give tools, pre-approve safe actions, and mechanically enforce test runs, the questions vanish. What remains is an autonomous collaborator that takes a single instruction and delivers a finished result.
+
+The knowledge base layer (Karpathy) adds compounding: every AI exploration feeds back into a searchable knowledge store. The TDD loop layer (NVIDIA) adds mechanical correctness: tests run automatically, failures get attention automatically, and the iteration cap prevents death-spirals. Together, you get autonomy that doesn't cut corners.
+
+---
+
 ## Related Work
 
 - [Claude Code Skills Docs](https://code.claude.com/docs/en/skills)
@@ -348,6 +427,7 @@ The knowledge base layer (inspired by Karpathy) adds compounding: every AI explo
 - [Claude Code Routines Docs](https://code.claude.com/docs/en/routines)
 - [Claude Managed Agents Docs](https://docs.anthropic.com/en/docs/managed-agents)
 - [Agent Skills Open Standard](https://github.com/anthropics/skills)
+- [ruvnet/ruflo](https://github.com/ruvnet/ruflo) — Enterprise multi-agent orchestration platform with swarm intelligence and RAG. Use this if you need a production-grade framework; our kit is a lighter config pattern for solo builders and small teams.
 - [everything-claude-code](https://github.com/affaan-m/everything-claude-code) — 38 agents, 156 skills
 - [claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice) — Community patterns
 
@@ -355,7 +435,7 @@ The knowledge base layer (inspired by Karpathy) adds compounding: every AI explo
 
 ## Contributing
 
-PRs welcome for new skills, subagent specializations, MCP configs, hook scripts, and knowledge base improvements.
+PRs welcome for new skills, subagent specializations, MCP configs, hook scripts, routine templates, and knowledge base improvements.
 
 ---
 
